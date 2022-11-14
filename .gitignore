@@ -1,0 +1,4 @@
+*.bbf
+*.bf
+__pycache__/
+brainthoughts

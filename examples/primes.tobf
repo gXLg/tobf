@@ -1,0 +1,21 @@
+!list a 50
+n = 2
+l = 0
+!while 50/(l + 1)
+  prime = 1
+  i = 0
+  !while l/(i + 1)
+    !ifnot n%(a#i)
+      prime = 0
+      i = l
+    !fi
+    i = i + 1
+  !done
+  !if prime
+    !print n
+    !print "\n"
+    a#l = n
+    l = l + 1
+  !fi
+  n = n + 1
+!done
