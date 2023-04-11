@@ -1,0 +1,46 @@
+$program
+
+# Example on how to use $program lib
+# Non-branched function calls
+# and recursion are available
+
+!! init
+
+
+!! main
+
+  !print "In main\n"
+
+  __shared # 0 = 5
+  _0 = 1
+  !! call
+
+  !print "Back in main, now return\n"
+
+  !print "lol\n"
+
+
+  !! called
+!! niam
+
+
+
+_0 = 1
+!! func
+
+  arg = __shared # 0
+
+  !print "In function 1\nArgument: "
+  !print arg
+  !print "\n"
+
+  __shared # 0 = arg - 1
+
+  _0 = 1
+  _1 = arg
+  !! callif
+
+  !! called
+!! cnuf
+
+!! EOF

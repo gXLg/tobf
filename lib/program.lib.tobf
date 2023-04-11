@@ -1,0 +1,59 @@
+!macro call
+  __called # __caller = __called # __caller + 1
+  __caller = __caller + 1
+  __calls # __caller = _0
+
+  !else
+    __calln = __calln + 1
+    !ifnot __called # __caller - __calln
+!end
+
+!macro called
+  !fi
+!end
+
+!macro func
+  !ifnot __calls # __caller - _0
+    __calln = 0
+    !ifnot __called # __caller
+!end
+
+!macro cnuf
+      __caller = __caller - 1
+    !fi
+  !fi
+!end
+
+!macro main
+  _0 = 0
+  !! func
+!end
+
+!macro niam
+      __run = 0
+    !fi
+  !fi
+!end
+
+!macro init
+  !list __calls 255
+  !list __called 255
+  __caller = 0
+  !list __shared 255
+  __run = 1
+  !while __run
+!end
+
+!macro EOF
+  _0 = 255
+  !! func
+  !! cnuf
+  !done
+!end
+
+!macro callif
+  !ifnot _1
+    _0 = 255
+  !fi
+  !! call
+!end

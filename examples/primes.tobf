@@ -4,7 +4,7 @@ l = 0
 !while 50/(l + 1)
   prime = 1
   i = 0
-  !while l/(i + 1)
+  !while l/(i + 1) * prime
     !ifnot n%(a#i)
       prime = 0
       i = l

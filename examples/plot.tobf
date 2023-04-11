@@ -1,0 +1,46 @@
+!list plot 50
+r = 50
+
+i = 0
+!while r/(i + 1)
+  x = i - r/2
+
+  FUNC = x*x/10
+
+  plot#i = FUNC + 128
+  i = i + 1
+!done
+
+dy = 0
+!while r/(dy + 1)
+  dx = 0
+  !while r/(dx + 1)
+
+    y = r/2 - dy
+    x = dx - r/2
+
+    v = plot#dx
+    f = 1 - (v - y + 128)/(v - y + 128)
+
+    fx = x / x
+    fy = y / y
+    !if f
+      !print "##"
+    !fi
+    !ifnot f
+      !ifnot x
+        !print "||"
+      !fi
+      !ifnot y
+        !print "--"
+      !fi
+      !if fx*fy
+        !print "  "
+      !fi
+    !fi
+    dx = dx + 1
+  !done
+
+  !print "\n"
+  dy = dy + 1
+!done

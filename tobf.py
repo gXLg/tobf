@@ -32,7 +32,7 @@ import parse
 from sys import argv
 
 if len(argv) < 2:
-  exit("No file specified")
+  raise Exception("No file specified")
 
 class Brain:
   def __init__(self):
@@ -43,6 +43,10 @@ class Brain:
     self.new_scope()
 
     self.sc = []
+
+    self.macros = { }
+    self.macro = None
+    self.mcount = 0
 
   def new_scope(self):
     self.scopes.append(Scope(self.pointer + 1))
@@ -67,7 +71,7 @@ class Brain:
     for scope in self.scopes[:: -1]:
       if scope.has_var(var):
         return scope.offset + scope.get_var(var)
-    exit("Var not found")
+    raise Exception("Var not found", var)
 
   def has_var(self, var):
     for scope in self.scopes[:: -1]:
@@ -79,13 +83,28 @@ class Brain:
     self.code += "+>>-"
     self.pointer += 2
 
+  def get_macro(self, var):
+    if var in self.macros:
+      return self.macros[var]
+    raise Exception("Macro not found")
+
   def execute(self, line):
     if line[0] == "#": return
 
-    if line[0] == "!":
+    command, *arg = line.split(" ", 1)
+    command, arg = command[1:], "".join(arg)
 
-      command, *arg = line.split(" ", 1)
-      command, arg = command[1:], "".join(arg)
+    if self.macro is not None:
+
+      if command == "macro": self.mcount += 1
+      elif command == "end": self.mcount -= 1
+      if self.mcount == 0:
+        self.macro = None
+      else:
+        self.macros[self.macro].append(line)
+      return
+
+    if line[0] == "!":
 
       if command == "print":
 
@@ -127,6 +146,11 @@ class Brain:
         self.code += ">" + c + "[[-]<"
         self.new_scope()
 
+      elif command == "else":
+        self.del_scope()
+        self.code += ">>+<[-]]+>[<->-]<[[-]<"
+        self.new_scope()
+
       elif command == "fi":
         self.del_scope()
         self.code += ">[-]]<"
@@ -139,7 +163,7 @@ class Brain:
       elif command == "read":
         v = arg.split(" ", 1)[0]
         if not v.isidentifier:
-          exit("Why the hell not identifier?")
+          raise Exception("Why the hell not identifier?")
         if not self.has_var(v):
           self.new_var(v)
         p = self.get_var(v)
@@ -149,7 +173,7 @@ class Brain:
       elif command == "readi":
         v = arg.split(" ", 1)[0]
         if not v.isidentifier:
-          exit("Why the hell not identifier?")
+          raise Exception("Why the hell not identifier?")
         if not self.has_var(v):
           self.new_var(v)
         p = self.get_var(v)
@@ -166,22 +190,41 @@ class Brain:
       elif command == "new":
         v = arg.split(" ", 1)[0]
         if not v.isidentifier:
-          exit("Why the hell not identifier?")
+          raise Exception("Why the hell not identifier?")
         self.new_var(v)
 
       elif command == "list":
         v = arg.split(" ", 1)[0]
         if not v.isidentifier:
-          exit("Why the hell not identifier?")
+          raise Exception("Why the hell not identifier?")
         l = int(arg.split(" ", 2)[1])
         if not 1 <= l <= 255:
-          exit(f"Wrong list length: {l}")
+          raise Exception(f"Wrong list length: {l}")
         self.new_var(v)
         self.scopes[-1].pointer += 2 * (l + 1)
         # array finishes by having two empty cells
         # but one space is already made by new_var
         self.code += "+" + ">>" * (l + 1) + "-"
         self.pointer += 2 * (l + 1)
+
+      elif command == "macro":
+        name = arg.split(" ", 1)[0]
+        if not name.isidentifier:
+          raise Exception("Why the hell not identifier?")
+        self.macro = name
+        self.mcount += 1
+        self.macros[name] = []
+
+      elif command == "!":
+        name = arg.split(" ", 1)[0]
+        if not name.isidentifier:
+          raise Exception("Why the hell not identifier?")
+        macro = self.get_macro(name)
+        for line in macro:
+          self.execute(line)
+
+      else:
+        raise Exception("Wrong command bre: " + command)
 
     else:
       c = parse.compile(line, self, 1)
@@ -200,19 +243,31 @@ class Scope:
     return var in self.vars
 
   def new_var(self, var):
-    if self.has_var(var): exit("Already defined var: " + var)
+    if self.has_var(var): raise Exception("Already defined var: " + var)
     self.vars[var] = self.pointer
     self.pointer += 2
 
-
-with open(argv[1], "r") as file:
-  code = [i.strip() for i in file.readlines() if i.strip()]
+code = []
+def make(file):
+  with open(file, "r") as file:
+    c = [i.strip() for i in file.readlines() if i.strip()]
+  modules = True
+  for line in c:
+    if line[0] == "$":
+      if not modules:
+        raise Exception("Modules should be imported on top!")
+      make("./lib/" + line[1:] + ".lib.tobf")
+    else:
+      code.append(line)
+      modules = False
+make(argv[1])
 
 bf = Brain()
 
 for line in code:
   bf.execute(line)
 
+#bf.execute("!call main ()")
 bf.destroy()
 
 head = "[Custom tobf compiler by gXLg]\n"
